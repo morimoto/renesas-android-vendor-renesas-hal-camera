@@ -227,6 +227,38 @@ int ImageProcessor::ConvertFormat(const CameraMetadata& metadata,
                     << " is unsupported for YU12 source format.";
         return -EINVAL;
     }
+  } else if (in_frame.GetFourcc() == V4L2_PIX_FMT_NV12) {
+    switch (out_frame->GetFourcc()) {
+      case V4L2_PIX_FMT_YUV420:  // YU12
+      {
+        int res = libyuv::NV12ToI420(
+            in_frame.GetData(),      /* src_y */
+            in_frame.GetWidth(),     /* src_stride_y */
+            in_frame.GetData() +
+                in_frame.GetWidth() * in_frame.GetHeight(),
+                                     /* src_uv */
+            in_frame.GetWidth(),     /* src_stride_uv */
+            out_frame->GetData(),    /* dst_y */
+            out_frame->GetWidth(),   /* dst_stride_y */
+            out_frame->GetData() +
+                out_frame->GetWidth() * out_frame->GetHeight(), /* dst_u */
+            out_frame->GetWidth() / 2, /* dst_stride_u */
+            out_frame->GetData() + out_frame->GetWidth() *
+                                       out_frame->GetHeight() * 5 /
+                                       4, /* dst_v */
+            out_frame->GetWidth() / 2,    /* dst_stride_v */
+            in_frame.GetWidth(),     /* width */
+            in_frame.GetHeight()     /* height */
+        );
+        LOGF_IF(ERROR, res) << "NV12ToI420() for YU12 returns " << res;
+        return res ? -EINVAL : 0;
+      }
+      default:
+        LOGF(ERROR) << "Destination pixel format "
+                    << FormatToString(out_frame->GetFourcc())
+                    << " is unsupported for NV12 source format.";
+        return -EINVAL;
+    }
   } else if (in_frame.GetFourcc() == V4L2_PIX_FMT_MJPEG) {
     switch (out_frame->GetFourcc()) {
       case V4L2_PIX_FMT_YUV420:  // YU12

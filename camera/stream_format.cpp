@@ -30,7 +30,7 @@ using arc::SupportedFormats;
 
 static const std::vector<uint32_t> GetSupportedFourCCs() {
   // The preference of supported fourccs in the list is from high to low.
-  static const std::vector<uint32_t> kSupportedFourCCs = {V4L2_PIX_FMT_YUYV,
+  static const std::vector<uint32_t> kSupportedFourCCs = {V4L2_PIX_FMT_NV12,
                                                           V4L2_PIX_FMT_MJPEG};
   return kSupportedFourCCs;
 }
@@ -103,6 +103,7 @@ int StreamFormat::V4L2ToHalPixelFormat(uint32_t v4l2_pixel_format) {
     case V4L2_PIX_FMT_NV21:
       return HAL_PIXEL_FORMAT_YCrCb_420_SP;
     case V4L2_PIX_FMT_YUV420:
+    case V4L2_PIX_FMT_NV12:
       return HAL_PIXEL_FORMAT_YCbCr_420_888;
     case V4L2_PIX_FMT_YUYV:
       return HAL_PIXEL_FORMAT_YCbCr_422_I;
@@ -126,9 +127,9 @@ uint32_t StreamFormat::HalToV4L2PixelFormat(int hal_pixel_format) {
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
       // This is a flexible YUV format that depends on platform. Different
       // platform may have different format. It can be YVU420 or NV12. Now we
-      // return YVU420 first.
+      // return NV12 first.
       // TODO(): call drm_drv.get_fourcc() to get correct format.
-      return V4L2_PIX_FMT_YUV420;
+      return V4L2_PIX_FMT_NV12;
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       return V4L2_PIX_FMT_YUYV;
     case HAL_PIXEL_FORMAT_YCrCb_420_SP:

@@ -189,7 +189,7 @@ int Camera::configureStreams(camera3_stream_configuration_t *stream_config)
 
     // Revert back HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED format.
     for (size_t i = 0; i < stream_config->num_streams; ++i) {
-        if (stream_config->streams[i]->format == HAL_PIXEL_FORMAT_RGBA_8888) {
+        if (stream_config->streams[i]->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
             stream_config->streams[i]->format  = HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
         }
     }
@@ -210,7 +210,7 @@ int Camera::configureStreams(camera3_stream_configuration_t *stream_config)
     // Override HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED format.
     for (size_t i = 0; i < stream_config->num_streams; ++i) {
         if (stream_config->streams[i]->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
-            stream_config->streams[i]->format  = HAL_PIXEL_FORMAT_RGBA_8888;
+            stream_config->streams[i]->format  = HAL_PIXEL_FORMAT_YCbCr_420_888;
         }
     }
 
