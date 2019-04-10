@@ -85,9 +85,6 @@ private:
     private:
         ExternalCameraProvider* mParent = nullptr;
         const std::unordered_set<std::string> mInternalDevices;
-
-        int mINotifyFD = -1;
-        int mWd = -1;
     };
 
     Mutex mLock;

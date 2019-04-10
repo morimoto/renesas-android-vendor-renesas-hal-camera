@@ -19,11 +19,11 @@
 #include <log/log.h>
 
 #include <regex>
-#include <sys/inotify.h>
 #include <errno.h>
 #include <linux/videodev2.h>
 #include "ExternalCameraProvider.h"
 #include "ExternalCameraDevice_3_4.h"
+#include "ExternalCameraUeventListener.h"
 
 namespace android {
 namespace hardware {
@@ -243,49 +243,14 @@ bool ExternalCameraProvider::HotplugThread::threadLoop() {
     closedir(devdir);
 
     // Watch new video devices
-    mINotifyFD = inotify_init();
-    if (mINotifyFD < 0) {
-        ALOGE("%s: inotify init failed! Exiting threadloop", __FUNCTION__);
-        return true;
-    }
-
-    mWd = inotify_add_watch(mINotifyFD, kDevicePath, IN_CREATE | IN_DELETE);
-    if (mWd < 0) {
-        ALOGE("%s: inotify add watch failed! Exiting threadloop", __FUNCTION__);
-        return true;
-    }
-
-    ALOGI("%s start monitoring new V4L2 devices", __FUNCTION__);
-
-    bool done = false;
-    char eventBuf[512];
-    while (!done) {
-        int offset = 0;
-        int ret = read(mINotifyFD, eventBuf, sizeof(eventBuf));
-        if (ret >= (int)sizeof(struct inotify_event)) {
-            while (offset < ret) {
-                struct inotify_event* event = (struct inotify_event*)&eventBuf[offset];
-                if (event->wd == mWd) {
-                    if (!strncmp(kPrefix, event->name, kPrefixLen)) {
-                        std::string deviceId(event->name + kPrefixLen);
-                        if (mInternalDevices.count(deviceId) == 0) {
-                            char v4l2DevicePath[kMaxDevicePathLen];
-                            snprintf(v4l2DevicePath, kMaxDevicePathLen,
-                                    "%s%s", kDevicePath, event->name);
-                            if (event->mask & IN_CREATE) {
-                                mParent->deviceAdded(v4l2DevicePath);
-                            }
-                            if (event->mask & IN_DELETE) {
-                                mParent->deviceRemoved(v4l2DevicePath);
-                            }
-                        }
-                    }
-                }
-                offset += sizeof(struct inotify_event) + event->len;
-            }
-        }
-    }
-
+    Listener listener;
+    listener.SetAddCallback([this](const char* v4l2DevicePath){
+        mParent->deviceAdded(v4l2DevicePath);});
+    listener.SetRemoveCallback([this](const char* v4l2DevicePath){
+        mParent->deviceRemoved(v4l2DevicePath);});
+    // Doesn't matter what is happened into inner loop...
+    listener.Loop ();
+    // ... we will ask to restat.
     return true;
 }
 
