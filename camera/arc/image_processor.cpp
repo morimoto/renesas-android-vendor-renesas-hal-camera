@@ -101,7 +101,7 @@ bool ImageProcessor::SupportsConversion(uint32_t from_fourcc,
       return (to_fourcc == V4L2_PIX_FMT_YUV420);
     case V4L2_PIX_FMT_YUV420:
       return (
-          to_fourcc == V4L2_PIX_FMT_YUV420 ||
+          to_fourcc == V4L2_PIX_FMT_YUV420 || to_fourcc == V4L2_PIX_FMT_NV12 ||
           to_fourcc == V4L2_PIX_FMT_YVU420 || to_fourcc == V4L2_PIX_FMT_NV21 ||
           to_fourcc == V4L2_PIX_FMT_RGB32 || to_fourcc == V4L2_PIX_FMT_BGR32 ||
           to_fourcc == V4L2_PIX_FMT_JPEG);
@@ -175,6 +175,28 @@ int ImageProcessor::ConvertFormat(const CameraMetadata& metadata,
         memcpy(out_frame->GetData(), in_frame.GetData(),
                in_frame.GetDataSize());
         return 0;
+      }
+      case V4L2_PIX_FMT_NV12:
+      {
+        int res = libyuv::I420ToNV12(
+            in_frame.GetData(),      /* src_y */
+            in_frame.GetWidth(),     /* src_stride_y */
+            in_frame.GetData() +
+                in_frame.GetWidth() * in_frame.GetHeight(), /* src_u */
+            in_frame.GetWidth() / 2, /* src_stride_u */
+            in_frame.GetData() +
+                in_frame.GetWidth() * in_frame.GetHeight() * 5 / 4, /* src_v */
+            in_frame.GetWidth() / 2, /* src_stride_v */
+            out_frame->GetData(),    /* dst_y */
+            out_frame->GetWidth(),   /* dst_stride_y */
+            out_frame->GetData() +
+                out_frame->GetWidth() * out_frame->GetHeight(), /* dst_uv */
+            out_frame->GetWidth(),   /* dst_stride_uv */
+            in_frame.GetWidth(),     /* width */
+            in_frame.GetHeight()     /* height */
+        );
+        LOGF_IF(ERROR, res) << "I420ToNV12() returns " << res;
+        return res ? -EINVAL : 0;
       }
       case V4L2_PIX_FMT_NV21:  // NV21
       {
