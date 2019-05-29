@@ -1724,7 +1724,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         return false;
     };
 
-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG) {
+    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG
+     && req->frameIn->mFourcc != V4L2_PIX_FMT_YUYV) {
         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
                 req->frameIn->mFourcc & 0xFF,
                 (req->frameIn->mFourcc >> 8) & 0xFF,
@@ -1738,19 +1739,36 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     uint8_t* inData;
     size_t inDataSize;
     req->frameIn->map(&inData, &inDataSize);
-    // TODO: in some special case maybe we can decode jpg directly to gralloc output?
-    ATRACE_BEGIN("MJPGtoI420");
-    int res = libyuv::MJPGToI420(
-            inData, inDataSize,
-            static_cast<uint8_t*>(mYu12FrameLayout.y),
-            mYu12FrameLayout.yStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cb),
-            mYu12FrameLayout.cStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cr),
-            mYu12FrameLayout.cStride,
-            mYu12Frame->mWidth, mYu12Frame->mHeight,
-            mYu12Frame->mWidth, mYu12Frame->mHeight);
-    ATRACE_END();
+    int res = 0;
+    if (req->frameIn->mFourcc == V4L2_PIX_FMT_MJPEG) {
+        // TODO: in some special case maybe we can decode jpg directly to gralloc output?
+        ATRACE_BEGIN("MJPGtoI420");
+        res = libyuv::MJPGToI420(
+                inData, inDataSize,
+                static_cast<uint8_t*>(mYu12FrameLayout.y),
+                mYu12FrameLayout.yStride,
+                static_cast<uint8_t*>(mYu12FrameLayout.cb),
+                mYu12FrameLayout.cStride,
+                static_cast<uint8_t*>(mYu12FrameLayout.cr),
+                mYu12FrameLayout.cStride,
+                mYu12Frame->mWidth, mYu12Frame->mHeight,
+                mYu12Frame->mWidth, mYu12Frame->mHeight);
+        ATRACE_END();
+    }
+    if (req->frameIn->mFourcc == V4L2_PIX_FMT_YUYV) {
+        ATRACE_BEGIN("YUYVtoI420");
+        res = libyuv::YUY2ToI420(
+                inData,
+                mYu12Frame->mWidth * 2,
+                static_cast<uint8_t*>(mYu12FrameLayout.y),
+                mYu12FrameLayout.yStride,
+                static_cast<uint8_t*>(mYu12FrameLayout.cb),
+                mYu12FrameLayout.cStride,
+                static_cast<uint8_t*>(mYu12FrameLayout.cr),
+                mYu12FrameLayout.cStride,
+                mYu12Frame->mWidth, mYu12Frame->mHeight);
+        ATRACE_END();
+    }
 
     if (res != 0) {
         // For some webcam, the first few V4L2 frames might be malformed...
