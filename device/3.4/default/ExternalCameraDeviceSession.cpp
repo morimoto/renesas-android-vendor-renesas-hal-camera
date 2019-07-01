@@ -2235,7 +2235,9 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
     }
     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
     ALOGI("%s: V4L2 buffer size is %d", __FUNCTION__, bufferSize);
-    uint32_t expectedMaxBufferSize = kMaxBytesPerPixel * fmt.fmt.pix.width * fmt.fmt.pix.height;
+    uint32_t expectedMaxBufferSize = v4l2Fmt.fourcc == 0x47504a4d/*MJPG*/
+                                   ? mCfg.maxJpegBufSize
+                                   : kMaxBytesPerPixel * fmt.fmt.pix.width * fmt.fmt.pix.height;
     if ((bufferSize == 0) || (bufferSize > expectedMaxBufferSize)) {
         ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u", __FUNCTION__,
                 bufferSize, expectedMaxBufferSize);
