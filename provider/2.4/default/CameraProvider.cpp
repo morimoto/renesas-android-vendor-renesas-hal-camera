@@ -546,7 +546,6 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
-    sp<android::hardware::camera::device::V3_2::ICameraDevice> device;
     if (deviceVersion == kHAL3_4) {
         ALOGV("Constructing v3.4 camera device");
         sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> deviceImpl =
@@ -554,13 +553,11 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
                     mModule, cameraId, mCameraDeviceNames);
         if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
             ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-            device = nullptr;
             _hidl_cb(Status::INTERNAL_ERROR, nullptr);
             return Void();
         }
 
-        device = deviceImpl;
-        _hidl_cb (Status::OK, device);
+        _hidl_cb (Status::OK, deviceImpl->getInterface());
         return Void();
     }
 
@@ -575,11 +572,10 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
                     mModule, cameraId, mCameraDeviceNames);
             if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
                 ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-                device = nullptr;
                 _hidl_cb(Status::INTERNAL_ERROR, nullptr);
                 return Void();
             }
-            device = deviceImpl;
+            _hidl_cb (Status::OK, deviceImpl->getInterface());
             break;
         }
         case 3: { // Map legacy camera device v3 HAL to Treble camera device HAL v3.3
@@ -589,20 +585,17 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
                     mModule, cameraId, mCameraDeviceNames);
             if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
                 ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-                device = nullptr;
                 _hidl_cb(Status::INTERNAL_ERROR, nullptr);
                 return Void();
             }
-            device = deviceImpl;
+            _hidl_cb (Status::OK, deviceImpl->getInterface());
             break;
         }
         default:
             ALOGE("%s: Unknown HAL minor version %d!", __FUNCTION__, mPreferredHal3MinorVersion);
-            device = nullptr;
             _hidl_cb(Status::INTERNAL_ERROR, nullptr);
             return Void();
     }
-    _hidl_cb (Status::OK, device);
     return Void();
 }
 

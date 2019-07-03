@@ -155,6 +155,7 @@ int Listener::Loop ()
                 }
             }
 
+            [[fallthrough]];
             default:
                 ;
         }

@@ -109,7 +109,7 @@ LOCAL_MODULE := camera.v4l2_test.kingfisher
 LOCAL_CFLAGS += $(v4l2_cflags)
 LOCAL_SHARED_LIBRARIES := $(v4l2_shared_libs)
 LOCAL_STATIC_LIBRARIES := \
-  libBionicGtestMain \
+  libgtest_isolated_main \
   libgmock \
   $(v4l2_static_libs) \
 

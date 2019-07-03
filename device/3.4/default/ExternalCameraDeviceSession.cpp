@@ -2088,8 +2088,9 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
                 ALOGI("%s: BLOB format does not support dataSpace %x", __FUNCTION__, ds);
                 return false;
             }
-        case PixelFormat::IMPLEMENTATION_DEFINED:
-        case PixelFormat::YCBCR_420_888:
+        FALLTHROUGH_INTENDED;
+        case PixelFormat::IMPLEMENTATION_DEFINED: FALLTHROUGH_INTENDED;
+        case PixelFormat::YCBCR_420_888: FALLTHROUGH_INTENDED;
         case PixelFormat::YV12:
             // TODO: check what dataspace we can support here.
             // intentional no-ops.
@@ -2747,7 +2748,7 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
     const uint8_t controlMode = ANDROID_CONTROL_MODE_AUTO;
     UPDATE(md, ANDROID_CONTROL_MODE, &controlMode, 1);
 
-    auto requestTemplates = hidl_enum_iterator<RequestTemplate>();
+    auto requestTemplates = hidl_enum_range<RequestTemplate>();
     for (RequestTemplate type : requestTemplates) {
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata mdCopy = md;
         uint8_t intent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
