@@ -136,19 +136,16 @@ Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
     }
 
     ALOGV("Constructing v3.4 external camera device");
-    sp<device::V3_2::ICameraDevice> device;
     sp<device::V3_4::implementation::ExternalCameraDevice> deviceImpl =
             new device::V3_4::implementation::ExternalCameraDevice(
                     cameraId, mCfg);
     if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
         ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-        device = nullptr;
         _hidl_cb(Status::INTERNAL_ERROR, nullptr);
         return Void();
     }
-    device = deviceImpl;
 
-    _hidl_cb (Status::OK, device);
+    _hidl_cb (Status::OK, deviceImpl->getInterface());
 
     return Void();
 }
