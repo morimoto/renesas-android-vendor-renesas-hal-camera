@@ -50,7 +50,7 @@ int Listener::Loop ()
 
     // Open netlink socket.
     int nd = -1;    // Netlink socket descriptor.
-    nd = uevent_open_socket (1 * 1024 * 1024, true);
+    nd = uevent_open_socket (256 * 1024, true);
     if (-1 == nd) {
         ALOGE ("Can not open a socket: %s.", std::strerror (errno) );
         return errno;
