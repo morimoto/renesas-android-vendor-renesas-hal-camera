@@ -25,12 +25,12 @@
 #include "tinyxml2.h"  // XML parsing
 #include "utils/LightRefBase.h"
 
-using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
-
 namespace android {
 namespace hardware {
 namespace camera {
+
+using android::hardware::graphics::mapper::V2_0::IMapper;
+using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 
 namespace external {
 namespace common {

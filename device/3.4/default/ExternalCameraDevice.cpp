@@ -51,7 +51,8 @@ constexpr int OPEN_RETRY_SLEEP_US = 100000; // 100ms * MAX_RETRY = 0.5 seconds
 ExternalCameraDevice::ExternalCameraDevice(
         const std::string& cameraId, const ExternalCameraConfig& cfg) :
         mCameraId(cameraId),
-        mCfg(cfg) {}
+        mCfg(cfg),
+        mCroppingType(HORIZONTAL) {}
 
 ExternalCameraDevice::~ExternalCameraDevice() {}
 
@@ -605,14 +606,14 @@ status_t ExternalCameraDevice::initOutputCharskeysByFormat(
             streamConfigurations.push_back(streamConfigTag);
         }
 
-        int64_t minFrameDuration = std::numeric_limits<int64_t>::max();
+        int64_t supportedFrameDuration = std::numeric_limits<int64_t>::max();
         for (const auto& fr : supportedFormat.frameRates) {
             // 1000000000LL < (2^32 - 1) and
             // fr.durationNumerator is uint32_t, so no overflow here
             int64_t frameDuration = 1000000000LL * fr.durationNumerator /
                     fr.durationDenominator;
-            if (frameDuration < minFrameDuration) {
-                minFrameDuration = frameDuration;
+            if (frameDuration < supportedFrameDuration) {
+                supportedFrameDuration = frameDuration;
             }
         }
 
@@ -620,7 +621,7 @@ status_t ExternalCameraDevice::initOutputCharskeysByFormat(
             minFrameDurations.push_back(format);
             minFrameDurations.push_back(supportedFormat.width);
             minFrameDurations.push_back(supportedFormat.height);
-            minFrameDurations.push_back(minFrameDuration);
+            minFrameDurations.push_back(supportedFrameDuration);
         }
 
         // The stall duration is 0 for non-jpeg formats. For JPEG format, stall

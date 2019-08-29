@@ -55,6 +55,8 @@ constexpr int IOCTL_RETRY_SLEEP_US = 33000; // 33ms * MAX_RETRY = 0.5 seconds
 static constexpr int kDumpLockRetries = 50;
 static constexpr int kDumpLockSleep = 60000;
 
+static constexpr double fpsEpsilon = 0.01;  // Allowed error during floating-point comparison.
+
 bool tryLock(Mutex& mutex)
 {
     bool locked = false;
@@ -714,7 +716,7 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
             requestFpsMax = closestFps;
         }
 
-        if (requestFpsMax != mV4l2StreamingFps) {
+        if (std::abs (requestFpsMax - mV4l2StreamingFps) > fpsEpsilon) {
             {
                 std::unique_lock<std::mutex> lk(mV4l2BufferLock);
                 while (mNumDequeuedV4l2Buffers != 0) {
@@ -832,7 +834,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
     return Status::OK;
 }
 
-Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequest>& req) {
+Status ExternalCameraDeviceSession::processCaptureResult(const std::shared_ptr<HalRequest>& req) {
     ATRACE_CALL();
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req->frameIn);
@@ -945,7 +947,8 @@ void ExternalCameraDeviceSession::freeReleaseFences(hidl_vec<CaptureResult>& res
 
 ExternalCameraDeviceSession::OutputThread::OutputThread(
         wp<ExternalCameraDeviceSession> parent,
-        CroppingType ct) : mParent(parent), mCroppingType(ct) {}
+        CroppingType ct) : mParent(parent), mCroppingType(ct),
+        mYu12FrameLayout(), mYu12ThumbFrameLayout() {}
 
 ExternalCameraDeviceSession::OutputThread::~OutputThread() {}
 
@@ -1038,7 +1041,7 @@ int ExternalCameraDeviceSession::OutputThread::getCropRect(
 }
 
 int ExternalCameraDeviceSession::OutputThread::cropAndScaleLocked(
-        sp<AllocatedFrame>& in, const Size& outSz, YCbCrLayout* out) {
+        const sp<AllocatedFrame>& in, const Size& outSz, YCbCrLayout* out) {
     Size inSz = {in->mWidth, in->mHeight};
 
     int ret;
@@ -1130,7 +1133,7 @@ int ExternalCameraDeviceSession::OutputThread::cropAndScaleLocked(
 
 
 int ExternalCameraDeviceSession::OutputThread::cropAndScaleThumbLocked(
-        sp<AllocatedFrame>& in, const Size &outSz, YCbCrLayout* out) {
+        const sp<AllocatedFrame>& in, const Size &outSz, YCbCrLayout* out) {
     Size inSz  {in->mWidth, in->mHeight};
 
     if ((outSz.width * outSz.height) >
@@ -1485,7 +1488,7 @@ int ExternalCameraDeviceSession::OutputThread::encodeJpegYU12(
     uint8_t *pcr = static_cast<uint8_t*>(inLayout.cr);
     uint8_t *pcb = static_cast<uint8_t*>(inLayout.cb);
 
-    for(uint32_t i = 0; i < paddedHeight; i++)
+    for(size_t i = 0; i < paddedHeight; i++)
     {
         /* Once we are in the padding territory we still point to the last line
          * effectively replicating it several times ~ CLAMP_TO_EDGE */
@@ -1558,7 +1561,7 @@ Size ExternalCameraDeviceSession::getMaxThumbResolution() const {
     Size thumbSize { 0, 0 };
     camera_metadata_ro_entry entry =
         mCameraCharacteristics.find(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES);
-    for(uint32_t i = 0; i < entry.count; i += 2) {
+    for(size_t i = 0; i < entry.count; i += 2) {
         Size sz { static_cast<uint32_t>(entry.data.i32[i]),
                   static_cast<uint32_t>(entry.data.i32[i+1]) };
         if(sz.width * sz.height > thumbSize.width * thumbSize.height) {
@@ -2376,7 +2379,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
 
     const double kDefaultFps = 30.0;
     double fps = 1000.0;
-    if (requestFps != 0.0) {
+    if (requestFps > fpsEpsilon) {
         fps = requestFps;
     } else {
         double maxFps = -1.0;
@@ -2390,7 +2393,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
                 fps = f;
             }
         }
-        if (fps == 1000.0) {
+        if (std::abs (fps - 1000.0) < fpsEpsilon) {
             fps = maxFps;
         }
     }
@@ -2735,7 +2738,7 @@ Status ExternalCameraDeviceSession::configureStreams(
     Size thumbSize { 0, 0 };
     camera_metadata_ro_entry entry =
         mCameraCharacteristics.find(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES);
-    for(uint32_t i = 0; i < entry.count; i += 2) {
+    for(size_t i = 0; i < entry.count; i += 2) {
         Size sz { static_cast<uint32_t>(entry.data.i32[i]),
                   static_cast<uint32_t>(entry.data.i32[i+1]) };
         if(sz.width * sz.height > thumbSize.width * thumbSize.height) {

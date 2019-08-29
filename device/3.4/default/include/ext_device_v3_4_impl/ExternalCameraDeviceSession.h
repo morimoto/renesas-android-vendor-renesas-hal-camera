@@ -236,7 +236,7 @@ protected:
 
     Status processOneCaptureRequest(const CaptureRequest& request);
 
-    Status processCaptureResult(std::shared_ptr<HalRequest>&);
+    Status processCaptureResult(const std::shared_ptr<HalRequest>&);
     Status processCaptureRequestError(const std::shared_ptr<HalRequest>&);
     void notifyShutter(uint32_t frameNumber, nsecs_t shutterTs);
     void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec);
@@ -290,11 +290,11 @@ protected:
         void signalRequestDone();
 
         int cropAndScaleLocked(
-                sp<AllocatedFrame>& in, const Size& outSize,
+                const sp<AllocatedFrame>& in, const Size& outSize,
                 YCbCrLayout* out);
 
         int cropAndScaleThumbLocked(
-                sp<AllocatedFrame>& in, const Size& outSize,
+                const sp<AllocatedFrame>& in, const Size& outSize,
                 YCbCrLayout* out);
 
         int formatConvertLocked(const YCbCrLayout& in, const YCbCrLayout& out,
