@@ -739,6 +739,18 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
                                 static_cast<int32_t>(maximumFormat.height)};
     UPDATE(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE, pixelArraySize,
            ARRAY_SIZE(pixelArraySize));
+
+    float physicalSize[] = {3.674, 2.760};
+    UPDATE(ANDROID_SENSOR_INFO_PHYSICAL_SIZE, physicalSize,
+           ARRAY_SIZE(physicalSize));
+
+    constexpr float focalLength {3.04};
+    UPDATE(ANDROID_LENS_FOCAL_LENGTH, &focalLength, 1);
+
+    float focalLengths[] = {focalLength};
+    UPDATE(ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS, focalLengths,
+           ARRAY_SIZE(focalLengths));
+
     return OK;
 }
 
