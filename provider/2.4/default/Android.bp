@@ -9,7 +9,6 @@ cc_binary {
     init_rc: ["android.hardware.camera.provider@2.4-service.kingfisher.rc"],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libbinder",
         "liblog",
         "libutils",
@@ -57,7 +56,6 @@ cc_binary {
     init_rc: ["android.hardware.camera.provider@2.4-external-service.kingfisher.rc"],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libbinder",
         "liblog",
         "libutils",
